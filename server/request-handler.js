@@ -23,6 +23,7 @@ this file and include it in basic-server.js so that it actually works.
 // client from this domain by setting up static file serving.
 // var handleStubs = require('./spec/Stubs');
 var messages = { 'results': [] };
+var objectIdCounter = 1;
 
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
@@ -52,36 +53,59 @@ var requestHandler = function(request, response) {
   // console.log('Serving request type ' + request.method + ' for url ' + request.url);
   // console.log('response', response);
 
-  if (request.method === 'GET' && request.url === '/classes/messages') {
-    var statusCode = 200;
-    var headers = defaultCorsHeaders;
-    headers['Content-Type'] = 'application/json';
-    response.writeHead(statusCode, headers);
-    response.end(JSON.stringify(messages));
+  console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
-  } else if (request.method === 'POST' && request.url === '/classes/messages') {
-    // var statusCode = 201;
-    // var headers = defaultCorsHeaders;
-    // headers['Content-Type'] = 'application/json';
-    // response.writeHead(statusCode, headers);
-    // // messages['statusCode'] = statusCode;
+  if (request.method === 'GET' && request.url.includes('/classes/messages')) {
+      console.log('chatterbox sent a GET');
+      var statusCode = 200;
+      var headers = defaultCorsHeaders;
+      headers['Content-Type'] = 'application/json';
+      response.writeHead(statusCode, headers);
+      // if (request.url.includes('order=-createdAt')) {
+      //   var descendingResults = messages.results.reverse();
+      //   var descendingMessages = { 'results': descendingResults };
+      //   var JSONMessage = JSON.stringify(descendingMessages);
+      // } else {
+        var JSONMessage = JSON.stringify(messages);
+      // }
+      if (JSON.parse(JSONMessage).results.length === 0) {
+        console.log('JSONMessage.results.length === 0');
+        response.end('{ "results": [ { "username": "Initializing", "text": "Chat Server"} ] }');
+      } else {
+        response.end(JSONMessage);
+      }
 
+  } else if (request.method === 'POST' && request.url.includes('/classes/messages')) {
+    console.log('in post');
     var chunks = [];
     request.on('data', function(chunk) {
-      chunks = chunks.concat(chunk);
-    });
-    request.on('end', function() {
+      chunks.push(chunk);
+    })
+    .on('end', function() {
+      console.log('chunks:', chunks);
       var statusCode = 201;
       var headers = defaultCorsHeaders;
       headers['Content-Type'] = 'application/json';
       response.writeHead(statusCode, headers);
-    // messages['statusCode'] = statusCode;
-      messages['results'].push(JSON.parse(chunks[0]));
+      console.log('JSON.parse chunks toString:', JSON.parse(chunks));
+      var messageJSON = JSON.parse(chunks);
+      messageJSON['objectId'] = objectIdCounter;
+      objectIdCounter++;
+      messages['results'].push(messageJSON);
+      console.log('MESSAGES:', messages);
       response.end(JSON.stringify(messages));
     });
+  } else if (request.method === 'OPTIONS' && request.url.includes('/classes/messages')) {
+      var statusCode = 200;
+      var headers = defaultCorsHeaders;
+      headers['Content-Type'] = 'application/json';
+      response.writeHead(statusCode, headers);
+      response.end(JSON.stringify(messages));
+  // } else if (request.method === 'PUT' && request.url.includes('/classes/messages')) {
   } else {
     response.statusCode = 404;
     response.end();
+    
   }
 
   

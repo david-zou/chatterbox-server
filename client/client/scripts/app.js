@@ -43,7 +43,8 @@ var app = {
     $.ajax({
       url: app.server,
       type: 'POST',
-      data: message,
+      // data: message,
+      data: JSON.stringify(message),
       success: function (data) {
         // Clear messages input
         app.$message.val('');
@@ -57,24 +58,27 @@ var app = {
     });
   },
 
-  fetch: function(animate) {
+  fetch: function(animate) {  
+    console.log('chatterbox sending a GET NOW');
     $.ajax({
       url: app.server,
       type: 'GET',
       data: { order: '-createdAt' },
       contentType: 'application/json',
       success: function(data) {
+        console.log(data);
         // Don't bother if we have nothing to work with
-        if (!data.results || !data.results.length) { return; }
+        if (!data.results || !data.results.length) { console.log("there's NOTHING!"); return; }
 
         // Store messages for caching later
         app.messages = data.results;
-
+        console.log('DATA RESULTS: ', data.results);
         // Get the last message
         var mostRecentMessage = data.results[data.results.length - 1];
 
         // Only bother updating the DOM if we have a new message
         if (mostRecentMessage.objectId !== app.lastMessageId) {
+          console.log('mostRecentMessage.objectId !== app.lastMessageId');
           // Update the UI with the fetched rooms
           app.renderRoomList(data.results);
 
