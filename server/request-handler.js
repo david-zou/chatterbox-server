@@ -22,7 +22,7 @@ this file and include it in basic-server.js so that it actually works.
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
 // var handleStubs = require('./spec/Stubs');
-var bodyArr = [];
+var messages = { 'results': [] };
 
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
@@ -32,6 +32,9 @@ var defaultCorsHeaders = {
 };
 
 var requestHandler = function(request, response) {
+  // console.log("*********** request method", request.method)
+  // console.log("*********** request url", request.url)
+  // console.log('request info', request)
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -46,85 +49,41 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
- 
-  console.log('Serving request type ' + request.method + ' for url ' + request.url);
+  // console.log('Serving request type ' + request.method + ' for url ' + request.url);
+  // console.log('response', response);
 
   if (request.method === 'GET' && request.url === '/classes/messages') {
+    var statusCode = 200;
+    var headers = defaultCorsHeaders;
+    headers['Content-Type'] = 'application/json';
+    response.writeHead(statusCode, headers);
+    response.end(JSON.stringify(messages));
 
+  } else if (request.method === 'POST' && request.url === '/classes/messages') {
+    // var statusCode = 201;
+    // var headers = defaultCorsHeaders;
+    // headers['Content-Type'] = 'application/json';
+    // response.writeHead(statusCode, headers);
+    // // messages['statusCode'] = statusCode;
+
+    var chunks = [];
     request.on('data', function(chunk) {
-
-      bodyArr.push(chunk);
-
+      chunks = chunks.concat(chunk);
     });
-
     request.on('end', function() {
-
-      var statusCode = 200;
-
-      var headers = defaultCorsHeaders;
-
-      headers['Content-Type'] = 'application/JSON';
-
-      response.writeHead(statusCode, headers);
-
-      // body = Buffer.concat(body).toString();
-
-      var responseBody = {
-        headers: headers,
-        method: request.method,
-        url: request.url,
-        results: bodyArr
-      };
-
-      response.end(JSON.stringify(responseBody));
-
-    });
-
-  } else if (request.method === 'POST' && request.url === '/classes/messages' ) {
-
-    var body = '';
-    
-
-    request.on('data', function(chunk) {
-
-      body += chunk;
-      var formData = JSON.parse(body)
-      bodyArr.push(formData);
-
-    });
-
-    request.on('end', function() {
-
       var statusCode = 201;
-
       var headers = defaultCorsHeaders;
-
-      headers['Content-Type'] = 'application/JSON';
-
+      headers['Content-Type'] = 'application/json';
       response.writeHead(statusCode, headers);
-
-      // makes sense of the message
-      // body = Buffer.concat(body).toString();
-      
-
-      var responseBody = {
-        headers: headers,
-        method: request.method,
-        url: request.url,
-        results: bodyArr
-      };
-
-      // console.log('JSON.parse:', bodyArr);
-
-      response.end(JSON.stringify([responseBody]));
+    // messages['statusCode'] = statusCode;
+      messages['results'].push(JSON.parse(chunks[0]));
+      response.end(JSON.stringify(messages));
     });
-
-  } else if (request.method === 'OPTIONS' && request.url === '/classes/messages?order=-createdAt' ) {
-    
   } else {
     response.statusCode = 404;
-    response.end('ERROR!!!!');
+    response.end();
   }
+
   
 
   // request.on('error', function(err) {
