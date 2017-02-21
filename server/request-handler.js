@@ -21,6 +21,9 @@ this file and include it in basic-server.js so that it actually works.
 //
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
+// var handleStubs = require('./spec/Stubs');
+var bodyArr = [];
+
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -43,17 +46,18 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+ 
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
   if (request.method === 'GET' && request.url === '/classes/messages') {
 
-    var body = [];
-
     request.on('data', function(chunk) {
 
-      body.push(chunk);
+      bodyArr.push(chunk);
 
-    }).on('end', function() {
+    });
+
+    request.on('end', function() {
 
       var statusCode = 200;
 
@@ -66,10 +70,10 @@ var requestHandler = function(request, response) {
       // body = Buffer.concat(body).toString();
 
       var responseBody = {
-        headers: request.headers,
+        headers: headers,
         method: request.method,
         url: request.url,
-        results: body
+        results: bodyArr
       };
 
       response.end(JSON.stringify(responseBody));
@@ -78,13 +82,18 @@ var requestHandler = function(request, response) {
 
   } else if (request.method === 'POST' && request.url === '/classes/messages' ) {
 
-    var body = [];
+    var body = '';
+    
 
     request.on('data', function(chunk) {
 
-      body.push(chunk);
+      body += chunk;
+      var formData = JSON.parse(body)
+      bodyArr.push(formData);
 
-    }).on('end', function() {
+    });
+
+    request.on('end', function() {
 
       var statusCode = 201;
 
@@ -94,18 +103,24 @@ var requestHandler = function(request, response) {
 
       response.writeHead(statusCode, headers);
 
-    // body = Buffer.concat(body).toString();
+      // makes sense of the message
+      // body = Buffer.concat(body).toString();
+      
 
       var responseBody = {
-        headers: request.headers,
+        headers: headers,
         method: request.method,
         url: request.url,
-        results: body.messages
+        results: bodyArr
       };
 
-      response.end(JSON.stringify(responseBody));
+      // console.log('JSON.parse:', bodyArr);
+
+      response.end(JSON.stringify([responseBody]));
     });
 
+  } else if (request.method === 'OPTIONS' && request.url === '/classes/messages?order=-createdAt' ) {
+    
   } else {
     response.statusCode = 404;
     response.end('ERROR!!!!');
