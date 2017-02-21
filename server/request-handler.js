@@ -82,17 +82,17 @@ var requestHandler = function(request, response) {
 
     request.on('data', function(chunk) {
 
-    body.push(chunk);
+      body.push(chunk);
 
     }).on('end', function() {
 
-    var statusCode = 201;
+      var statusCode = 201;
 
-    var headers = defaultCorsHeaders;
+      var headers = defaultCorsHeaders;
 
-    headers['Content-Type'] = 'application/JSON';
+      headers['Content-Type'] = 'application/JSON';
 
-    response.writeHead(statusCode, headers);
+      response.writeHead(statusCode, headers);
 
     // body = Buffer.concat(body).toString();
 
@@ -101,7 +101,7 @@ var requestHandler = function(request, response) {
         method: request.method,
         url: request.url,
         results: body.messages
-    };
+      };
 
       response.end(JSON.stringify(responseBody));
     });
