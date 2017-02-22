@@ -10,6 +10,7 @@ var app = {
   lastMessageId: 0,
   friends: {},
   messages: [],
+  option: '-createdAt',
 
   init: function() {
     // Get username
@@ -33,7 +34,7 @@ var app = {
     // Poll for new messages
     setInterval(function() {
       app.fetch(true);
-    }, 5000);
+    }, 3000);
   },
 
   send: function(message) {
@@ -59,26 +60,26 @@ var app = {
   },
 
   fetch: function(animate) {  
-    console.log('chatterbox sending a GET NOW');
+
     $.ajax({
       url: app.server,
       type: 'GET',
-      data: { order: '-createdAt' },
+      data: { order: app.option },
       contentType: 'application/json',
       success: function(data) {
-        console.log(data);
         // Don't bother if we have nothing to work with
         if (!data.results || !data.results.length) { console.log('there\'s NOTHING!'); return; }
 
         // Store messages for caching later
         app.messages = data.results;
-        console.log('DATA RESULTS: ', data.results);
         // Get the last message
-        var mostRecentMessage = data.results[data.results.length - 1];
+
+        var mostRecentMessage;
+        
+        app.option === '-createdAt' ? mostRecentMessage = data.results[0] : mostRecentMessage = data.results[data.results.length - 1];
 
         // Only bother updating the DOM if we have a new message
         if (mostRecentMessage.objectId !== app.lastMessageId) {
-          console.log('mostRecentMessage.objectId !== app.lastMessageId');
           // Update the UI with the fetched rooms
           app.renderRoomList(data.results);
 

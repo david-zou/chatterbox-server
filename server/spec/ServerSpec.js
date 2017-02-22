@@ -59,7 +59,7 @@ describe('Node Server Request Listener Function', function() {
   it('Should accept posts to /classes/room', function() {
     var stubMsg = {
       username: 'Jono',
-      message: 'Do my bidding!'
+      text: 'Do my bidding!'
     };
     var req = new stubs.request('/classes/messages', 'POST', stubMsg);
     var res = new stubs.response();
@@ -78,7 +78,7 @@ describe('Node Server Request Listener Function', function() {
   it('Should respond with messages that were previously posted', function() {
     var stubMsg = {
       username: 'Jono',
-      message: 'Do my bidding!'
+      text: 'Do my bidding!'
     };
     var req = new stubs.request('/classes/messages', 'POST', stubMsg);
     var res = new stubs.response();
@@ -97,7 +97,7 @@ describe('Node Server Request Listener Function', function() {
     var messages = JSON.parse(res._data).results;
     expect(messages.length).to.be.above(0);
     expect(messages[0].username).to.equal('Jono');
-    expect(messages[0].message).to.equal('Do my bidding!');
+    expect(messages[0].text).to.equal('Do my bidding!');
     expect(res._ended).to.equal(true);
   });
 
@@ -114,6 +114,96 @@ describe('Node Server Request Listener Function', function() {
       function() {
         expect(res._responseCode).to.equal(404);
       });
+  });
+
+  it('Should respond with messages that have rooms', function() {
+    handler._clearMessages();
+    var stubMsg = {
+      username: 'Bruno',
+      text: 'Hashtag blessed!',
+      roomname: 'Dance'
+    };
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(201);
+
+    // Now if we request the log for that room the message we posted should be there:
+    req = new stubs.request('/classes/messages', 'GET');
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(200);
+    var messages = JSON.parse(res._data).results;
+    expect(messages.length).to.be.above(0);
+    expect(messages[0].username).to.equal('Bruno');
+    expect(messages[0].text).to.equal('Hashtag blessed!');
+    expect(messages[0].roomname).to.equal('Dance');
+    expect(res._ended).to.equal(true);
+  });
+
+    it('Should render the messages in descending chronological order', function() {
+    handler._clearMessages();
+    
+    var stubMsg = {
+      username: 'Bruno',
+      text: 'Hashtag blessed!',
+      roomname: 'Dance'
+    };
+
+    var stubMsg2 = {
+      username: 'Little drummer boy',
+      text: 'It is a small world after all!',
+      roomname: 'christmas'
+    };
+
+    var stubMsg3 = {
+      username: 'Ariana Grande',
+      text: 'I sing good!',
+      roomname: 'Too much'
+    };
+
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(201);
+
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg2);
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(201);
+
+    var req = new stubs.request('/classes/messages', 'POST', stubMsg3);
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(201);
+
+    // Now if we request the log for that room the message we posted should be there:
+    req = new stubs.request('/classes/messages', 'GET');
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(200);
+    var messagesCopy = JSON.parse(res._data).results.slice();
+    var reversedResults = messagesCopy.reverse();
+    var reversedMessages = { 'results': reversedResults };
+    var messages = reversedMessages.results;
+    expect(messages.length).to.be.above(0);
+    expect(messages[0].objectId).to.equal(3);
+    expect(messages[0].username).to.equal('Ariana Grande');
+    expect(messages[0].text).to.equal('I sing good!');
+    expect(messages[0].roomname).to.equal('Too much');
+    expect(res._ended).to.equal(true);
   });
 
 });

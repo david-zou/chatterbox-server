@@ -61,9 +61,17 @@ var requestHandler = function(request, response) {
     headers['Content-Type'] = 'application/json';
     response.writeHead(statusCode, headers);
 
-    var JSONMessage = JSON.stringify(messages);
+    var messagesCopy = messages.results.slice();
+    var reversedResults = messagesCopy.reverse();
+    var reversedMessages = { 'results': reversedResults };
+    if (request.url.includes('order=-createdAt')) {
+      var JSONMessage = JSON.stringify(reversedMessages);
+    } else {
+      var JSONMessage = JSON.stringify(messages);
+    }
+
     if (JSON.parse(JSONMessage).results.length === 0) {
-      response.end('{ "results": [ { "username": "Initializing", "text": "Chat Server"} ] }');
+      response.end('{ "results": [ { "username": "Chatterbot", "text": "Hi, welcome to Chatterbox!", "roomname": "lobby" } ] }');
     } else {
       response.end(JSONMessage);
     }
@@ -83,7 +91,17 @@ var requestHandler = function(request, response) {
       messageJSON['objectId'] = objectIdCounter;
       objectIdCounter++;
       messages['results'].push(messageJSON);
-      response.end(JSON.stringify(messages));
+
+      var messagesCopy = messages.results.slice();
+      var reversedResults = messagesCopy.reverse();
+      var reversedMessages = { 'results': reversedResults };
+      if (request.url.includes('order=-createdAt')) {
+        response.end(JSON.stringify(reversedMessages));
+      } else {
+        response.end(JSON.stringify(messages));
+      }
+
+      // response.end(JSON.stringify(messages));
     });
   } else if (request.method === 'OPTIONS' && request.url.includes('/classes/messages')) {
     var statusCode = 200;
@@ -94,7 +112,6 @@ var requestHandler = function(request, response) {
   } else {
     response.statusCode = 404;
     response.end();
-    
   }
   
     // The outgoing status.
@@ -123,6 +140,11 @@ var requestHandler = function(request, response) {
   // });
 };
 
-
+// FOR TESTING PURPOSES ONLY
+var _clearMessages = function() {
+  messages = { 'results': [] };
+  objectIdCounter = 1;
+};
 
 module.exports.requestHandler = requestHandler;
+module.exports._clearMessages = _clearMessages;
