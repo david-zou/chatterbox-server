@@ -68,7 +68,7 @@ var app = {
       success: function(data) {
         console.log(data);
         // Don't bother if we have nothing to work with
-        if (!data.results || !data.results.length) { console.log("there's NOTHING!"); return; }
+        if (!data.results || !data.results.length) { console.log('there\'s NOTHING!'); return; }
 
         // Store messages for caching later
         app.messages = data.results;

@@ -56,72 +56,50 @@ var requestHandler = function(request, response) {
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
   if (request.method === 'GET' && request.url.includes('/classes/messages')) {
-      console.log('chatterbox sent a GET');
-      var statusCode = 200;
-      var headers = defaultCorsHeaders;
-      headers['Content-Type'] = 'application/json';
-      response.writeHead(statusCode, headers);
-      // if (request.url.includes('order=-createdAt')) {
-      //   var descendingResults = messages.results.reverse();
-      //   var descendingMessages = { 'results': descendingResults };
-      //   var JSONMessage = JSON.stringify(descendingMessages);
-      // } else {
-        var JSONMessage = JSON.stringify(messages);
-      // }
-      if (JSON.parse(JSONMessage).results.length === 0) {
-        console.log('JSONMessage.results.length === 0');
-        response.end('{ "results": [ { "username": "Initializing", "text": "Chat Server"} ] }');
-      } else {
-        response.end(JSONMessage);
-      }
+    var statusCode = 200;
+    var headers = defaultCorsHeaders;
+    headers['Content-Type'] = 'application/json';
+    response.writeHead(statusCode, headers);
+
+    var JSONMessage = JSON.stringify(messages);
+    if (JSON.parse(JSONMessage).results.length === 0) {
+      response.end('{ "results": [ { "username": "Initializing", "text": "Chat Server"} ] }');
+    } else {
+      response.end(JSONMessage);
+    }
 
   } else if (request.method === 'POST' && request.url.includes('/classes/messages')) {
-    console.log('in post');
     var chunks = [];
     request.on('data', function(chunk) {
       chunks.push(chunk);
-    })
-    .on('end', function() {
-      console.log('chunks:', chunks);
+    });
+    
+    request.on('end', function() {
       var statusCode = 201;
       var headers = defaultCorsHeaders;
       headers['Content-Type'] = 'application/json';
       response.writeHead(statusCode, headers);
-      console.log('JSON.parse chunks toString:', JSON.parse(chunks));
       var messageJSON = JSON.parse(chunks);
       messageJSON['objectId'] = objectIdCounter;
       objectIdCounter++;
       messages['results'].push(messageJSON);
-      console.log('MESSAGES:', messages);
       response.end(JSON.stringify(messages));
     });
   } else if (request.method === 'OPTIONS' && request.url.includes('/classes/messages')) {
-      var statusCode = 200;
-      var headers = defaultCorsHeaders;
-      headers['Content-Type'] = 'application/json';
-      response.writeHead(statusCode, headers);
-      response.end(JSON.stringify(messages));
-  // } else if (request.method === 'PUT' && request.url.includes('/classes/messages')) {
+    var statusCode = 200;
+    var headers = defaultCorsHeaders;
+    headers['Content-Type'] = 'application/json';
+    response.writeHead(statusCode, headers);
+    response.end(JSON.stringify(messages));
   } else {
     response.statusCode = 404;
     response.end();
     
   }
-
   
-
-  // request.on('error', function(err) {
-  //   console.error(err);
-  // }).on('data', function(chunk) {
-  //   body.push(chunk);
-  // }).on('end', function() {
-  //   body = Buffer.concat(body).toString();
-
     // The outgoing status.
-    // var statusCode = 200;
 
     // See the note below about CORS headers.
-    // var headers = defaultCorsHeaders;
 
     // Tell the client we are sending them plain text.
     //
@@ -133,12 +111,6 @@ var requestHandler = function(request, response) {
     // which includes the status and all headers.
     // response.writeHead(statusCode, headers);
 
-    // var responseBody = {
-    //   headers: request.headers,
-    //   method: request.method,
-    //   url: request.url,
-    //   body: body
-    // };
 
     // Make sure to always call response.end() - Node may not send
     // anything back to the client until you do. The string you pass to
